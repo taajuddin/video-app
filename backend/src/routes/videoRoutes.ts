@@ -6,5 +6,6 @@ const videoRouter = Router();
 
 videoRouter.post('/upload', upload.single('video'), compressVideo, uploadVideo);
 videoRouter.get('/', getVideos);
+videoRouter.get('/:id', getVideoById)
 
 export { videoRouter };

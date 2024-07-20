@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import { Video } from '../model/videoModel';
+// import { GridFSBucket} from 'mongodb'
 
 const uploadVideo = async (req: Request, res: Response) => {
     const { title, category } = req.body;
+
     const video = new Video({
       title,
       category,

@@ -9,7 +9,8 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 const compressVideo = (req: Request, res: Response, next: NextFunction) => {
-  const tempDir = 'temp_videos';
+  console.log(path.join(__dirname))
+  const tempDir = path.join(__dirname, '../../compressedvideos');
   if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir);
   }

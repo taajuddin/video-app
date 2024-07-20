@@ -3,6 +3,7 @@
 # dependencies
 /node_modules
 /.env
+/temp_videos
 
 # testing
 /coverage

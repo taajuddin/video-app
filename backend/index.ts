@@ -23,9 +23,13 @@ mongoose
   });
 
 app.use('/api/videos', videoRouter);
+// console.log('pathName', path.join(__dirname, 'compressedVideos'))
+app.use('/compressedVideos', express.static(path.resolve(__dirname, 'compressedVideos')));
 
-app.use('/videos', express.static(path.join('http://localhost:4000', 'videos')))
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+

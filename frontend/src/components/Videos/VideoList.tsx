@@ -21,6 +21,14 @@ const VideoList: React.FC = () => {
     setVideos(videos);
   };
 
+  const videoPath=(videopath: string) =>{
+    // console.log(path.join(__dirname, videopath))
+    console.log(`../${videopath}`)
+    return `../${videopath}`
+  }
+
+
+
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h4" align='center'>Videos</Typography>
@@ -30,7 +38,7 @@ const VideoList: React.FC = () => {
             component="video"
             controls
             autoPlay
-            src={video.filePath}
+            src={`/compressedVideos/${video.filePath}`}
           />
           <CardContent>
             <Typography variant="h5">Title:  {video.title}</Typography>
