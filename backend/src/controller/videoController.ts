@@ -1,14 +1,15 @@
 import { Request, Response } from 'express';
 import { Video } from '../model/videoModel';
-// import { GridFSBucket} from 'mongodb'
+import { AnyExpression, connection } from 'mongoose';
+import { GridFSBucket, ObjectId} from 'mongodb'
 
-const uploadVideo = async (req: Request, res: Response) => {
+const uploadVideo = async (req: Request | any, res: Response) => {
     const { title, category } = req.body;
 
     const video = new Video({
       title,
       category,
-      filePath: req.file!.path,
+      fileId: req.file!.id,
     });
   
 
@@ -22,4 +23,13 @@ const getVideos = async (req: Request, res: Response) => {
   res.send(videos);
 };
 
-export { uploadVideo, getVideos };
+const getVideoById = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const db = connection.db;
+    const bucket = new GridFSBucket(db, { bucketName: 'videos' });
+  
+    const downloadStream = bucket.openDownloadStream(new ObjectId(id));
+    downloadStream.pipe(res);
+  };
+
+export { uploadVideo, getVideos , getVideoById};

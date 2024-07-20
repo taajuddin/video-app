@@ -1,49 +1,69 @@
 import { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
+import { GridFSBucket } from 'mongodb';
+import { connection } from 'mongoose';
 import ffmpeg from 'fluent-ffmpeg';
-import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
-import fs from 'fs';
+import { Readable, PassThrough } from 'stream';
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-const compressVideo = (req: Request, res: Response, next: NextFunction) => {
-  console.log(path.join(__dirname))
-  const tempDir = path.join(__dirname, '../../compressedvideos');
-  if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir);
-  }
-
-  const fileBuffer = req.file?.buffer;
-  if (!fileBuffer) {
+const compressVideo = (req: Request | any, res: Response, next: NextFunction) => {
+  if (!req.file) {
     return res.status(400).send('No file uploaded.');
   }
 
-  const inputFilePath = path.join(tempDir, `${uuidv4()}.mp4`);
-  const outputFilePath = path.join(tempDir, `compressed_${uuidv4()}.mp4`);
+  const fileBuffer = req.file.buffer;
+  const db = connection.db;
+  const bucket = new GridFSBucket(db, { bucketName: 'videos' });
 
-  fs.writeFileSync(inputFilePath, fileBuffer);
+  const inputBufferStream = new Readable();
+  inputBufferStream.push(fileBuffer);
+  inputBufferStream.push(null);
 
-  const ffmpegCommand = ffmpeg(inputFilePath)
-    .outputOptions('-vf', 'scale=-1:480')
-    .on('end', () => {
-      fs.unlinkSync(inputFilePath); // Clean up original file
-      req.file!.path = outputFilePath; // Attach the compressed file path to the request object
-      next();
+  const passThroughStream = new PassThrough();
+
+  const ffmpegCommand = ffmpeg()
+    .input(inputBufferStream)
+    .outputOptions('-vf', 'scale=-1:480') // Video filter to scale to 480p height
+    .format('mp4')
+    .on('start', (commandLine) => {
+      console.log('Spawned FFmpeg with command:', commandLine);
     })
-    .on('error', (err) => {
-      console.error('ffmpeg error:', err.message);
-      fs.unlinkSync(inputFilePath); // Clean up original file
-      return res.status(500).send(`ffmpeg error: ${err.message}`);
-    })
-    .save(outputFilePath);
+    // .on('stderr', (stderrLine) => {
+    //   console.error('FFmpeg stderr:', stderrLine);
+    // });
 
-  // Optionally, you can capture stdout and stderr to diagnose ffmpeg issues
-  ffmpegCommand.on('stderr', (stderrLine) => {
-    console.error('ffmpeg stderr:', stderrLine);
+  // Handle FFmpeg processing errors
+  ffmpegCommand.on('error', (err) => {
+    console.log('FFmpeg error:', err.message);
+    res.status(500).send('Error processing video');
+  });
+
+  // Handle PassThrough stream errors
+  passThroughStream.on('error', (err) => {
+    console.log('PassThrough error:', err.message);
+    res.status(500).send('Error processing file stream');
+  });
+
+  // Open upload stream to GridFS
+  const uploadStream = bucket.openUploadStream(req.file.originalname);
+
+  // Pipe FFmpeg output through PassThrough to GridFS upload stream
+  ffmpegCommand.pipe(passThroughStream, { end: true });
+  passThroughStream.pipe(uploadStream);
+
+  // Handle GridFS upload finish
+  uploadStream.on('finish', () => {
+    req.file!.id = uploadStream.id; // Attach the file id to req.file
+    next(); // Move to next middleware or route handler
+  });
+
+  // Handle GridFS upload errors
+  uploadStream.on('error', (err) => {
+    console.log('Upload error:', err.message);
+    res.status(500).send('Error uploading file');
   });
 };
-
 
 export { upload, compressVideo };

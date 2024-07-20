@@ -17,3 +17,10 @@ export const getVideos = async (category?: string) => {
   });
   return response.data;
 };
+
+export const getVideoById = async (id: string) => {
+    const response = await axios.get(`${API_URL}/${id}`, {
+      responseType: 'blob',
+    });
+    return URL.createObjectURL(response.data);
+  };

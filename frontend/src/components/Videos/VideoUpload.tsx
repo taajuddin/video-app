@@ -79,6 +79,7 @@ const VideoUploadForm: React.FC = () => {
         <input
           type="file"
           hidden
+          accept='video/*'
           onChange={handleFileChange}
         />
       </Button>

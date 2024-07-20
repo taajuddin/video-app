@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { upload, compressVideo } from '../middleware/videoCompressMiddleware';
-import { getVideos, uploadVideo } from '../controller/videoController';
+import { getVideos, uploadVideo, getVideoById } from '../controller/videoController';
 
 const videoRouter = Router();
 
