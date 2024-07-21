@@ -41,13 +41,13 @@ const VideoUploadForm: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: 2 }} alignContent={'center'}>
       {isVideoUploaded && (
          <Alert icon={<CheckIcon fontSize="inherit" />} severity="success">
          Video Has been successfully uploaded.
        </Alert>
       )}
-      <Typography variant="h6">Upload Video</Typography>
+      <Typography  sx={{ mt: 5.5 }} variant="h5">Upload Video</Typography>
       <TextField
         label="Title"
         value={title}

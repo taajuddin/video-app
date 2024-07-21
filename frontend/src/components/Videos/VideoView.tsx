@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Card, CardContent, CardMedia, MenuItem, Select, Typography } from '@mui/material';
+import { Box, Card, CardContent, CardMedia, Grid, MenuItem, Select, Typography } from '@mui/material';
 import { getVideos, getVideoById } from '../../api';
 
 interface Video {
@@ -53,7 +53,7 @@ const VideoList: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Typography variant="h6">Videos</Typography>
+      <Typography variant="h6" component="div">Videos</Typography>
       <Select
         value={category}
         onChange={(e) => setCategory(e.target.value as string)}
@@ -64,8 +64,10 @@ const VideoList: React.FC = () => {
         <MenuItem value="" >All Category</MenuItem>
         {filterCategory && filterCategory.map(cat =>(<MenuItem value={cat}>{cat}</MenuItem>))}
       </Select>
+      <Grid container spacing={2}>
       {videos && videos?.map((video) => (
-        <Card key={video._id} sx={{ mb: 2 }}>
+        <Grid key={video._id} item xs={12} sm={6} md={4}>
+        <Card sx={{  height: '100%' }} >
           <CardMedia
             component="video"
             controls
@@ -77,7 +79,9 @@ const VideoList: React.FC = () => {
             <Typography variant="body2">{video.category}</Typography>
           </CardContent>
         </Card>
+        </Grid>
       ))}
+      </Grid>
     </Box>
   );
 };
