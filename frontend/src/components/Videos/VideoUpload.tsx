@@ -88,6 +88,11 @@ const VideoUploadForm: React.FC = () => {
           onChange={handleFileChange}
         />
       </Button>
+      {file && (
+        <Typography variant="body1" sx={{my:2}}>
+          selected video: {file.name}
+        </Typography>
+      )}
       {uploading && <CircularProgress value={progress} />}
 
 
