@@ -9,7 +9,7 @@ It is video uploading and View App based on Category
 2. go to the path of the download directory
 3. go to frontend & backend and run
 >npm install
-4. for both client and server run
+4. for both frontend and backend and  run
 >npm start
 
 ## Notes -
