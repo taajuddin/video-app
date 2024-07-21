@@ -21,27 +21,32 @@ const VideoList: React.FC = () => {
   }, [category]);
 
   useEffect(() => {
-    const fetchVideoUrls = async () => {
-      const urls: { [key: string]: string } = {};
-      for (const video of videos) {
-        urls[video._id] = await getVideoById(video.fileId);
-      }
-      setVideoUrls(urls);
-    };
-
-    fetchVideoUrls();
+    fetchVideoUrls(); 
   }, [videos]);
+
+  const fetchVideoUrls = async () => {
+    const urls: { [key: string]: string } = {};
+    for (const video of videos) {
+      urls[video._id] = await getVideoById(video.fileId);
+    }
+    setVideoUrls(urls);
+  };
+
 
   // fetching All the video also based on category
   const fetchVideos = async () => {
-    if(category) {
-      const videos = await getVideos(category);
-      setVideos(videos);
-    }else {
-      const videos = await getVideos();
-      setVideos(videos);
-      const videoCategory=videos?.map((video: any) => video.category)
-      setFilteredCategory(videoCategory)
+    try {
+      if(category) {
+        const videos = await getVideos(category);
+        setVideos(videos);
+      }else {
+        const videos = await getVideos();
+        setVideos(videos);
+        const videoCategory=videos?.map((video: any) => video.category)
+        setFilteredCategory(videoCategory)
+      }
+    } catch (error) {
+      console.log('error', error)
     }
     
   };
