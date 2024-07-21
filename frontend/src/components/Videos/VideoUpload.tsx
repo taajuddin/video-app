@@ -66,6 +66,11 @@ const VideoUploadForm: React.FC = () => {
         <MenuItem value="" disabled>Select Category</MenuItem>
         <MenuItem value="Animation">Animation</MenuItem>
         <MenuItem value="Slow Mo">Slow Mo</MenuItem>
+        <MenuItem value="Entertainment">Entertainment</MenuItem>
+        <MenuItem value="Kids">Kids</MenuItem>
+        <MenuItem value="WildLife">Wild Life</MenuItem>
+
+
       </Select>
 
       <Button
