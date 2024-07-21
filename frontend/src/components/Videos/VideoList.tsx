@@ -37,12 +37,12 @@ const VideoList: React.FC = () => {
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h6">Videos</Typography>
-      {videos.map((video) => (
+      {videos && videos?.map((video) => (
         <Card key={video._id} sx={{ mb: 2 }}>
           <CardMedia
             component="video"
             controls
-            autoPlay
+            autoPlay={true}
             src={videoUrls[video._id]}
           />
           <CardContent>

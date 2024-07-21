@@ -15,12 +15,12 @@ export const getVideos = async (category?: string) => {
   const response = await axios.get(API_URL, {
     params: { category },
   });
-  return response.data;
+  return response?.data;
 };
 
 export const getVideoById = async (id: string) => {
     const response = await axios.get(`${API_URL}/${id}`, {
       responseType: 'blob',
     });
-    return URL.createObjectURL(response.data);
+    return URL.createObjectURL(response?.data);
   };

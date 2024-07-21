@@ -24,7 +24,7 @@ mongoose
 
 app.use('/api/videos', videoRouter);
 // console.log('pathName', path.join(__dirname, 'compressedVideos'))
-app.use('/compressedVideos', express.static(path.resolve(__dirname, 'compressedVideos')));
+// app.use('/compressedVideos', express.static(path.resolve(__dirname, 'compressedVideos')));
 
 
 

@@ -3,12 +3,16 @@ import multer from 'multer';
 import { GridFSBucket } from 'mongodb';
 import { connection } from 'mongoose';
 import ffmpeg from 'fluent-ffmpeg';
-import { Readable, PassThrough } from 'stream';
+import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
+import fs from 'fs';
+import path from 'path';
+
+ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-const compressVideo = (req: Request | any, res: Response, next: NextFunction) => {
+const compressVideo = async (req: Request | any, res: Response, next: NextFunction) => {
   if (!req.file) {
     return res.status(400).send('No file uploaded.');
   }
@@ -16,54 +20,73 @@ const compressVideo = (req: Request | any, res: Response, next: NextFunction) =>
   const fileBuffer = req.file.buffer;
   const db = connection.db;
   const bucket = new GridFSBucket(db, { bucketName: 'videos' });
+  const tempFolder = 'temp_videos';
+  const tempFileName : string = `${Date.now()}_${req.file.originalname}`;
+  const tempFilePath = path.join(tempFolder, tempFileName);
 
-  const inputBufferStream = new Readable();
-  inputBufferStream.push(fileBuffer);
-  inputBufferStream.push(null);
+  // Ensure the temp folder exists
+  if (!fs.existsSync(tempFolder)) {
+    fs.mkdirSync(tempFolder);
+  }
 
-  const passThroughStream = new PassThrough();
+  // Write the buffer to a temporary file
+  fs.writeFileSync(tempFilePath, fileBuffer);
 
-  const ffmpegCommand = ffmpeg()
-    .input(inputBufferStream)
-    .outputOptions('-vf', 'scale=-1:480') // Video filter to scale to 480p height
-    .format('mp4')
-    .on('start', (commandLine) => {
-      console.log('Spawned FFmpeg with command:', commandLine);
+  const compressedFileName = `compressed_${tempFileName}`;
+  const compressedFilePath = path.join(tempFolder, compressedFileName);
+
+  // Compress the video using ffmpeg
+  ffmpeg(tempFilePath)
+    .outputOptions('-c:v libx264')   // Use H.264 video codec
+    .outputOptions('-crf 28')        // Set constant rate factor for compression (adjust as needed)
+    .outputOptions('-preset fast')   // Set encoding speed to fast
+    .save(compressedFilePath)
+    .on('end', () => {
+      console.log('Video compression completed');
+
+      // Read the compressed file and upload to GridFS
+      const compressedFileStream = fs.createReadStream(compressedFilePath);
+      const uploadStream = bucket.openUploadStream(req.file.originalname);
+
+      compressedFileStream.pipe(uploadStream);
+
+      uploadStream.on('finish', () => {
+        req.file.id = uploadStream.id;
+        console.log('File uploaded successfully', uploadStream.id);
+
+        // Clean up temporary files
+        fs.unlinkSync(tempFilePath);
+        fs.unlinkSync(compressedFilePath);
+
+        next();
+      });
+
+      uploadStream.on('error', (err) => {
+        console.error('Error uploading file:', err);
+
+        // Clean up temporary files
+        fs.unlinkSync(tempFilePath);
+        fs.unlinkSync(compressedFilePath);
+
+        if (!res.headersSent) {
+          res.status(500).send('Error uploading file');
+        }
+      });
     })
-    // .on('stderr', (stderrLine) => {
-    //   console.error('FFmpeg stderr:', stderrLine);
-    // });
+    .on('error', (err) => {
+      console.error('Error during video compression:', err);
 
-  // Handle FFmpeg processing errors
-  ffmpegCommand.on('error', (err) => {
-    console.log('FFmpeg error:', err.message);
-    res.status(500).send('Error processing video');
-  });
+      // Clean up temporary files
+      fs.unlinkSync(tempFilePath);
 
-  // Handle PassThrough stream errors
-  passThroughStream.on('error', (err) => {
-    console.log('PassThrough error:', err.message);
-    res.status(500).send('Error processing file stream');
-  });
+      if (fs.existsSync(compressedFilePath)) {
+        fs.unlinkSync(compressedFilePath);
+      }
 
-  // Open upload stream to GridFS
-  const uploadStream = bucket.openUploadStream(req.file.originalname);
-
-  // Pipe FFmpeg output through PassThrough to GridFS upload stream
-  ffmpegCommand.pipe(passThroughStream, { end: true });
-  passThroughStream.pipe(uploadStream);
-
-  // Handle GridFS upload finish
-  uploadStream.on('finish', () => {
-    req.file!.id = uploadStream.id; // Attach the file id to req.file
-    next(); // Move to next middleware or route handler
-  });
-
-  // Handle GridFS upload errors
-  uploadStream.on('error', (err) => {
-    console.log('Upload error:', err.message);
-    res.status(500).send('Error uploading file');
-  });
+      if (!res.headersSent) {
+        res.status(500).send('Error during video compression');
+      }
+    });
 };
 
 export { upload, compressVideo };
