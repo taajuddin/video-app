@@ -2,7 +2,7 @@
 
 # overview
 
-It is video uploading App and viewing directly into database (MongoDB)
+It is video uploading and View App based on Category
 
 ## For use this application
 1. git clone download
@@ -15,7 +15,7 @@ It is video uploading App and viewing directly into database (MongoDB)
 ## Notes -
  > Make sure in your system ffmpeg install correctly
 
- 
+
 ### 🛠 Tech Stack - (MERN)
 
 - 💻 JavaScript | ES6
